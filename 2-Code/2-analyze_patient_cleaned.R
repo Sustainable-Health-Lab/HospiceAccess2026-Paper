@@ -1,5 +1,14 @@
+install.packages("glmmTMB", repos = NULL,
+                 contriburl = "file:/opt/software/cran/src/contrib/",
+                 type = "source",
+                 INSTALL_opts = c("--no-lock","--no-multiarch",  "--no-test-load"))
 
 
+R.version.string
+
+install.packages("/opt/software/cran/src/contrib/glmmTMB_1.1.14.tar.gz", repos=NULL, type="source")
+
+library(glmmTMB)
 library(Matrix)
 
 library(lme4)
@@ -36,6 +45,7 @@ df1 <- df %>%
 str(df1)
 
 df1$ZIPCODE <- as.factor(df1$ZIPCODE)
+
 
 df1$Income_scaled <- scale(df1$Income)
 df1$Income_log <- log(df1$Income, base=10)
@@ -175,9 +185,7 @@ dfs <- list(df_white = df_white, df_black = df_black, df_asian = df_asian, df_hi
 
 dfs1 <- list(df_15 = df_15, df_30 = df_30, df_60plus = df_60plus)
 
-dfs2 <- list(south_df = south_df, midwest_df = midwest_df, southcentral_df = southcentral_df, central_df = central_df,
-             mountain_df = mountain_df, pacific_df = pacific_df, pnw_df = pnw_df,
-             newengland_df = newengland_df, midatlantic_df = midatlantic_df, nynj_df = nynj_df)
+dfs2 <- list(south_df = south_df, pacific_df = pacific_df, nynj_df = nynj_df)
 
 
 
@@ -302,9 +310,9 @@ names[["df_filtered"]] <- df_filtered
 #                "ruca_category", "MIN_ToBreak", "Region", "race_str",'is_white',"is_asian",                     
 #                "is_black", "is_hispanic", "Suburban", "Urban","is_female", "is15min", "is30min", "greaterthan60", 'is60plus')                       
 # 
-# dfs2 <- list(south_df = south_df, midwest_df = midwest_df, southcentral_df = southcentral_df, central_df = central_df,
-#              mountain_df = mountain_df, pacific_df = pacific_df, pnw_df = pnw_df,
-#              newengland_df = newengland_df, midatlantic_df = midatlantic_df, nynj_df = nynj_df, df_filtered = df_filtered)
+dfs2 <- list(south_df = south_df, midwest_df = midwest_df, southcentral_df = southcentral_df, central_df = central_df,
+             mountain_df = mountain_df, pacific_df = pacific_df, pnw_df = pnw_df,
+             newengland_df = newengland_df, midatlantic_df = midatlantic_df, nynj_df = nynj_df, df_filtered = df_filtered)
 
 
 
@@ -342,6 +350,7 @@ colnames(df_filtered)
 sink("interaction_analysis.txt")
 
 df_filtered$race_str <- as.factor(df_filtered$race_str)
+
 
 levels(df_filtered$srace_str)
 
@@ -449,25 +458,38 @@ df_filtered <- df_filtered %>%
   mutate(region = factor(region))
 
 
+df_region_sub <- df_filtered %>% 
+  filter(region %in% c("nynj", "pacific", "south" ))
+
+table(df_filtered$region)
+
+
+df_region_sub$region <- droplevels(df_region_sub$region)
+
 ModIntReg <- glmer(hospice_use ~ region * (is_female + agedgrp5 + 
                                              race_str + 
                                              dist_factor +
                                              Black_pct + White_pct + Hispanic_pct +  Asian_pct+ 
                                              Suburban + Urban + Income_log_scaled) + (1|ZIPCODE),
                family = binomial,
-               data = df_filtered,
+               data = df_region_sub,
                control = glmerControl(optimizer = "bobyqa",
-                                      optCtrl = list(maxfun = 1e5)))
+    
+                                                                        optCtrl = list(maxfun = 1e5)))
 
-ModIntReg1 <- glmer(hospice_use ~ region * (is_female + agedgrp5 + 
-                                             race_str + 
-                                             dist_factor +
-                                             # Black_pct + White_pct + Hispanic_pct +  Asian_pct+ 
-                                             Suburban + Urban + Income_log_scaled) + (1|ZIPCODE),
-                   family = binomial,
-                   data = df_filtered,
-                   control = glmerControl(optimizer = "bobyqa",
-                                          optCtrl = list(maxfun = 1e5)))
+sink("region_subanalysis.txt")
+summary(ModIntReg)
+
+
+# ModIntReg1 <- glmer(hospice_use ~ region * (is_female + agedgrp5 + 
+#                                              race_str + 
+#                                              dist_factor +
+#                                              # Black_pct + White_pct + Hispanic_pct +  Asian_pct+ 
+#                                              Suburban + Urban + Income_log_scaled) + (1|ZIPCODE),
+#                    family = binomial,
+#                    data = df_filtered,
+#                    control = glmerControl(optimizer = "bobyqa",
+#                                           optCtrl = list(maxfun = 1e5)))
 
 
 # Main --------------------------------------------------------------------
@@ -502,11 +524,13 @@ ModMainReg <- glmer(hospice_use ~ is_female + agedgrp5 +
                    Black_pct + White_pct + Hispanic_pct +  Asian_pct+
                    Suburban + Urban + Income_log_scaled + region + (1|ZIPCODE),
 family = binomial,
-data = df_filtered,
+data = df_region_sub,
 control = glmerControl(optimizer = "bobyqa",
                        optCtrl = list(maxfun = 1e5)))
 
 
+
+summary(ModMainReg)
 
 ModMainReg1 <- glmer(hospice_use ~ is_female + agedgrp5 + 
                       race_str + 
@@ -561,6 +585,12 @@ Anova(ModMain, type = "III", test.statistic = "Chisq")
 print("ModMain1 - ANOVA")
 Anova(ModMain1, type = "III", test.statistic = "Chisq")
 
+
+print("ModIntReg - ANOVA")
+Anova(ModIntReg, type = "III", test.statistic = "Chisq")
+
+print("ModMainReg - ANOVA")
+Anova(ModMainReg, type = "III", test.statistic = "Chisq")
 
 
 sink()
