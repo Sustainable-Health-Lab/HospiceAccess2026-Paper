@@ -1,11 +1,4 @@
-#                  INSTALL_opts = c("--no-lock","--no-multiarch",  "--no-test-load"))
-# install.packages("marginaleffects", repos = NULL,
-#                  contriburl = "file:/opt/software/cran/src/contrib/",
-#                  type = "source",
 
-# R.version.string
-
-# install.packages("/opt/software/cran/src/contrib/lme4_1.1-37.tar.gz", repos=NULL, type="source")
 
 library(Matrix)
 
@@ -157,11 +150,9 @@ midwest_df <- df_filtered[df_filtered$STATE_x %in% midwest, ]
 southcentral <- c('AR', 'LA', 'NM', 'OK', 'TX')
 southcentral_df <- df_filtered[df_filtered$STATE_x %in% southcentral, ]
 
-# received a ConvergenceWarning
 central <- c('IA', 'KS', 'MO', 'NE')
 central_df <- df_filtered[df_filtered$STATE_x %in% central, ]
 
-# received a ConvergenceWarning
 mountain <- c('CO', 'MT', 'ND', 'SD', 'UT', 'WY')
 mountain_df <- df_filtered[df_filtered$STATE_x %in% mountain, ]
 
